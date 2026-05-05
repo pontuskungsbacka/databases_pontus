@@ -44,6 +44,7 @@ ORDER BY Operator,
 GO
 /*New Users table setup */
 -- G
+-- IF TABLE EXISTS DROP IT!
 DROP TABLE IF EXISTS NewUsers;
 SELECT * FROM Users;
 SELECT
