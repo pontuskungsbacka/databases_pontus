@@ -2,6 +2,8 @@
 av Pontus Johansson
 AIMM25G */
 -- SELECT * FROM MoonMissions;
+/* Insure that the database is correct */
+USE everyloop
 
 /*SuccessfulMissions table setup */
 -- IF TABLE EXISTS DROP IT!
@@ -62,13 +64,57 @@ INTO NewUsers
 FROM Users;
 
 GO
-
+/* Check for duplicates */
 SELECT 
     UserName,
     COUNT(UserName) as Duplicates
 FROM NewUsers
 GROUP BY UserName
 HAVING COUNT(UserName) > 1;
+
+/* Find columns for dublicates */
+
+SELECT *
+FROM NewUsers
+WHERE UserName IN (
+	SELECT UserName
+	FROM NewUsers
+	GROUP BY UserName
+	HAVING COUNT(UserName) > 1
+)
+ORDER BY UserName;
+
+/* Assign new unique IDs to the duplicates with Common Table Expression (CTE),
+	So the duplicates get unique usernames with 1,2,3,... 
+	Since I didn't include FirstName & LastName in NewUsers I took it from the Users table */
+	
+WITH CTE AS (
+    SELECT 
+        ID,
+        UserName,
+        NewUName =
+            LOWER(
+                LEFT(TRANSLATE(FirstName, 'åäöÅÄÖ', 'aaoAAO'), 3) +
+                LEFT(TRANSLATE(LastName, 'åäöÅÄÖ', 'aaoAAO'), 3)
+            ),
+        RowNum = ROW_NUMBER() OVER (
+            PARTITION BY 
+                LOWER(
+                    LEFT(TRANSLATE(FirstName, 'åäöÅÄÖ', 'aaoAAO'), 3) +
+                    LEFT(TRANSLATE(LastName, 'åäöÅÄÖ', 'aaoAAO'), 3)
+                )
+            ORDER BY ID
+        )
+    FROM Users
+)
+UPDATE N
+SET UserName =
+    CASE 
+        WHEN C.RowNum = 1 THEN C.NewUName
+        ELSE LEFT(C.NewUName, 5) + CAST(C.RowNum - 1 AS NVARCHAR(1))
+    END
+FROM NewUsers N
+JOIN CTE C ON N.ID = C.ID;
 
 GO
 
