@@ -87,7 +87,7 @@ ORDER BY UserName;
 /* Assign new unique IDs to the duplicates with Common Table Expression (CTE),
 	So the duplicates get unique usernames with 1,2,3,... 
 	Since I didn't include FirstName & LastName in NewUsers I took it from the Users table */
-	
+
 WITH CTE AS (
     SELECT 
         ID,
